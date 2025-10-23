@@ -67,6 +67,7 @@
 #'   sample_size = 25000,
 #'   sampling_mode = "roi_only"
 #' )
+#' }
 cycif_pipeline <- function(
   counts,
   rois = NULL,

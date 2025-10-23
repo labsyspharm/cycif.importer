@@ -112,13 +112,5 @@ results <- cycif_pipeline(
   sample_size = 25000,
   sampling_mode = "roi_only"
 )
-
-# Custom file patterns
-results <- cycif_pipeline(
-  counts = "/path/to/data",
-  output_dir = "/path/to/output",
-  cell_file_pattern = "Sample_*_cells.csv.gz",
-  roi_file_pattern = "Sample_*_rois.csv"
-)
 }
 }

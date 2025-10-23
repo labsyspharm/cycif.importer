@@ -10,6 +10,7 @@
 validate_cell_data_structure <- function(data, required_cols, no_missing = FALSE) {
   # Get the variable name from the call
   data_name <- deparse(substitute(data))
+  data <- tibble::as_tibble(data)
 
   if (!is.data.frame(data)) {
     stop(sprintf("%s must be a data frame", data_name))
@@ -168,7 +169,7 @@ resolve_input_data <- function(input, loader_func, loader_args = list(), data_ty
   if (is.null(input)) {
     return(NULL)
   }
-  
+
   if (is.character(input) && length(input) == 1) {
     # Input is a path - load using the provided loader function
     message(sprintf("Loading %s from path: %s", data_type, input))

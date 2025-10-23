@@ -25,7 +25,7 @@ gating.
 
 ## Features
 
-- **Data Import**: Load UNMICST cell segmentation data and ROI definitions
+- **Data Import**: Load single cell quantification data and ROI definitions
 - **Gating**: Apply single and double marker gating thresholds
 - **ROI Assignment**: Assign cells to regions of interest polygons
 - **Marker Combinations**: Phenotype cells using custom marker combinations
@@ -46,9 +46,10 @@ remotes::install_github("clemenshug/cycif.importer")
 The `cycif.importer` package implements a modular three-stage analysis pipeline:
 
 ### Stage 1: Import & Gate
-- Load cell quantification data from UNMICST output
+- Load cell quantification data from MCMICRO output
 - Load ROI definitions
 - Apply single and double marker gates
+- Apply marker combinations
 - Assign cells to ROIs with optional boundary expansion
 
 ### Stage 2: Sample
@@ -149,9 +150,9 @@ summaries <- cycif_summarize(
 
 The package expects specific input file formats. Here are examples using the built-in test data:
 
-### Cell Quantification Data (UNMICST Output)
+### Cell Quantification Data
 
-Cell-level quantification files from UNMICST segmentation (`.csv` or `.csv.gz` format)
+Cell-level quantification files from MCMICRO or similar (`.csv` or `.csv.gz` format)
 
 #### Directory Structure
 
@@ -165,8 +166,13 @@ data_dir/
 ```
 
 - Files should follow the pattern: `{slideName}--unmicst_cell.csv[.gz]`
-- The `slideName` portion (before `--unmicst_cell`) must match the `slideName` in your gate thresholds file
-- Compressed (`.gz`) files are automatically detected and handled
+- The `slideName` portion (before `--unmicst_cell`) must match the `slideName`
+  in your gate thresholds file and the ROI file names.
+- Custom file patterns can be specified via the `cell_file_pattern` argument in
+  `cycif_load_cell_data()` or `cycif_pipeline()`. For the example data,
+  cell_file_pattern would be `*--unmicst_cell.csv*`. The first wildcard (`*`)
+  matches the slide name, and the second wildcard (`*`) matches the optional `.gz`
+  extension.
 
 #### Example
 

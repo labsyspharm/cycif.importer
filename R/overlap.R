@@ -300,7 +300,7 @@ resolve_pairwise_overlap <- function(two_polygon_sf) {
 #' @keywords internal
 create_splitting_line <- function(intersection_sf, two_polygon_sf) {
   # Add additional points along polygon boundary for better Voronoi diagram
-  intersection_densified <- sf::st_segmentize(intersection_sf, dfMaxLength = 1)
+  intersection_densified <- sf::st_segmentize(intersection_sf, dfMaxLength = .1)
 
   # Compute touch points only on region of original polygons that are relevant
   # to this intersection

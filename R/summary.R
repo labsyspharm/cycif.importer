@@ -42,7 +42,8 @@ cycif_summarize <- function(
   # Memory-efficient approach: work with standardized list and only combine when needed
   data <- standardize_input_data(data)
 
-  if (any(purrr::map_lgl(names(summary_filters), is.null))) {
+  if (!is.null(summary_filters) &&
+        any(purrr::map_lgl(names(summary_filters), is.null))) {
     stop("All summary_filters must be named formula expressions")
   }
   if (any(purrr::map_lgl(names(summary_groups), is.null))) {
@@ -64,21 +65,35 @@ cycif_summarize <- function(
 
   results <- list()
   for (group_name in names(summary_groups)) {
-    for (filter_name in names(summary_filters)) {
-      if (filter_name %in% attr(data_with_filters, "missing_combinations")) {
-        warning(sprintf("Skipping group '%s' with filter '%s': missing columns (%s)", group_name, filter_name, paste(attr(data_with_filters, "missing_vars"), collapse = ", ")))
-        next
-      }
-      group_vars <- summary_groups[[group_name]]
-      filter_name_sym <- rlang::ensym(filter_name)
+    group_vars <- summary_groups[[group_name]]
 
-      res_slide <- data_with_filters |>
-        purrr::map(\(x) filter(x, !!filter_name_sym)) |>
+    if (is.null(summary_filters)) {
+      # No filtering - use all data
+      res_slide <- data |>
         bind_rows(.id = "slideName") |>
         create_summary(group_vars = group_vars)
+      results[[group_name]] <- res_slide
+    } else {
+      # Apply filters
+      for (filter_name in names(summary_filters)) {
+        if (filter_name %in% attr(data_with_filters, "missing_combinations")) {
+          warning(sprintf(
+            "Skipping group '%s' with filter '%s': missing columns (%s)",
+            group_name, filter_name,
+            paste(attr(data_with_filters, "missing_vars"), collapse = ", ")
+          ))
+          next
+        }
+        filter_name_sym <- rlang::ensym(filter_name)
 
-      # Store in results
-      results[[paste(group_name, filter_name, sep = "__")]] <- res_slide
+        res_slide <- data_with_filters |>
+          purrr::map(\(x) filter(x, !!filter_name_sym)) |>
+          bind_rows(.id = "slideName") |>
+          create_summary(group_vars = group_vars)
+
+        # Store in results
+        results[[paste(group_name, filter_name, sep = "__")]] <- res_slide
+      }
     }
   }
 

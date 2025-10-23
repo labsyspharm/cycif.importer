@@ -299,8 +299,6 @@ resolve_pairwise_overlap <- function(two_polygon_sf) {
 #' @return An sf linestring geometry for splitting, or NULL if failed
 #' @keywords internal
 create_splitting_line <- function(intersection_sf, two_polygon_sf) {
-  # Add additional points along polygon boundary for better Voronoi diagram
-  intersection_densified <- sf::st_segmentize(intersection_sf, dfMaxLength = .1)
 
   # Compute touch points only on region of original polygons that are relevant
   # to this intersection
@@ -331,41 +329,54 @@ create_splitting_line <- function(intersection_sf, two_polygon_sf) {
   # Use first two touch points
   start_pt <- touch_pts[1, ]
   end_pt <- touch_pts[2, ]
+  # Filter edges where edge == TRUE
 
-  # Create Voronoi diagram from intersection points
-  voronoi_edges <- sf::st_voronoi(intersection_densified[1, ], bOnlyEdges = TRUE)
-  voronoi_lines <- cast_quiet(voronoi_edges, "LINESTRING")
-
-  # Filter to only interior Voronoi edges
-  voronoi_interior <- voronoi_lines[sf::st_within(voronoi_lines, intersection_sf, sparse = FALSE), ]
-
-  if (length(voronoi_interior) == 0) {
-    message("      No interior Voronoi edges found")
-    return(NULL)
-  }
-
-  # Find closest points on Voronoi edges to start and end touch points
-  start_nearest_idx <- sf::st_nearest_feature(start_pt, voronoi_interior)
-  end_nearest_idx <- sf::st_nearest_feature(end_pt, voronoi_interior)
-
-  closest_to_start <- sf::st_nearest_points(start_pt, voronoi_interior[start_nearest_idx, ])
-  closest_to_end <- sf::st_nearest_points(end_pt, voronoi_interior[end_nearest_idx, ])
-
-  # Combine Voronoi edges with connection points for graph creation
-  voronoi_with_connections <- dplyr::bind_rows(
-    sf::st_sf(geometry = voronoi_interior),
-    sf::st_sf(geometry = closest_to_start),
-    sf::st_sf(geometry = closest_to_end)
+  # Produce straight skeleton of the intersection polygon
+  skeleton <- raybevel::skeletonize(
+    intersection_sf,
+    progress = FALSE
   )
+
+  edges_filtered <- skeleton$links |>
+    filter(!edge)
+
+  # Get the nodes that are actually used in the filtered edges
+  used_node_ids <- unique(c(edges_filtered$source, edges_filtered$destination))
+
+  # Filter nodes to only those used in edges
+  nodes_filtered <- skeleton$nodes |>
+    filter(id %in% used_node_ids)
+
+  # Convert nodes to sf object with POINT geometry
+  nodes_sf <- sf::st_as_sf(
+    nodes_filtered,
+    coords = c("x", "y"),
+    remove = FALSE
+  )
+
+  # Convert edges to a data frame with from and to columns
+  edges_df <- edges_filtered |>
+    select(from = source, to = destination, everything())
+
+  # Create sfnetwork
+  voronoi_network <- sfnetworks::sfnetwork(
+    sf::st_as_sf(
+      nodes_filtered,
+      coords = c("x", "y"),
+      remove = FALSE
+    ),
+    select(
+      edges_filtered,
+      from = source, to = destination,
+      everything()
+    ),
+    directed = FALSE,
+    edges_as_lines = TRUE
+  )
+
 
   # Create network for shortest path calculation
   tryCatch({
-    voronoi_network <- sfnetworks::as_sfnetwork(
-      voronoi_with_connections,
-      directed = FALSE,
-      length_as_weight = TRUE
-    )
-
     # Find nearest network nodes to start and end points
     start_node_idx <- sf::st_nearest_feature(start_pt, sfnetworks::activate(voronoi_network, "nodes"))
     end_node_idx <- sf::st_nearest_feature(end_pt, voronoi_network)

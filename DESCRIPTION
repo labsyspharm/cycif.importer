@@ -1,6 +1,6 @@
 Package: cycif.importer
 Title: CyCIF Analysis Pipeline for Multiplexed Tissue Imaging Data
-Version: 0.1.8
+Version: 0.1.9
 Authors@R:
     person("Clemens", "Hug", , "clemens.hug@gmail.com", role = c("aut", "cre"))
 Description: A comprehensive toolkit for analyzing CyCIF (Cyclic Immunofluorescence)
@@ -25,7 +25,8 @@ Imports:
     powerjoin,
     sf,
     sfnetworks,
-    lwgeom
+    lwgeom,
+    raybevel (>= 0.2.2)
 Suggests:
     testthat (>= 3.0.0),
     knitr,
@@ -33,3 +34,5 @@ Suggests:
     ggplot2
 Config/testthat/edition: 3
 VignetteBuilder: knitr
+Remotes:
+    tylermorganwall/raybevel

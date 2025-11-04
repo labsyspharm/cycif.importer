@@ -97,7 +97,7 @@ cycif_load_cell_data <- function(data_dir, slide_filter = NULL, file_pattern = "
 #' Files should follow the naming pattern specified by `file_pattern`.
 #'
 #' @param roi_dir Directory containing ROI files
-#' @param slide_names Optional vector of slide names to load ROIs for
+#' @param slide_filter Optional vector of slide names to load
 #' @param file_pattern Glob pattern for matching files. The first `*` indicates
 #'   where the slide name appears in the filename. Default: "*-rois.csv"
 #'   Examples: "Sample_*_rois.csv", "*_roi_data.csv"
@@ -110,19 +110,27 @@ cycif_load_cell_data <- function(data_dir, slide_filter = NULL, file_pattern = "
 #' # Load ROI data for all slides with default pattern
 #' roi_data <- cycif_load_roi_data("/path/to/rois")
 #'
-#' # Load ROI data for specific slides
-#' roi_data <- cycif_load_roi_data("/path/to/rois", slide_names = c("slide1", "slide2"))
+#' # Load specific slides only
+#' roi_data <- cycif_load_roi_data("/path/to/rois", slide_filter = c("slide1", "slide2"))
 #'
 #' # Use custom file pattern
 #' roi_data <- cycif_load_roi_data("/path/to/rois", file_pattern = "Sample_*_rois.csv")
 #' }
-cycif_load_roi_data <- function(roi_dir, file_pattern = "*-rois.csv") {
+cycif_load_roi_data <- function(roi_dir, slide_filter = NULL, file_pattern = "*-rois.csv") {
   # Match files using pattern
   matched <- match_files_with_pattern(roi_dir, file_pattern)
 
   if (length(matched) == 0) {
     warning(sprintf("No files matching pattern '%s' found", file_pattern))
     return(NULL)
+  }
+
+  # Apply slide filter if provided
+  if (!is.null(slide_filter)) {
+    matched <- matched[slide_filter]
+    if (length(matched) == 0) {
+      stop("No files found matching slide filter")
+    }
   }
 
   roi_data <- purrr::map(

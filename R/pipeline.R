@@ -109,7 +109,7 @@ cycif_pipeline <- function(
   }
   roi_data <- resolve_input_data(
     rois,
-    function(path) cycif_load_roi_data(path, names(cell_data), file_pattern = roi_file_pattern),
+    function(path) cycif_load_roi_data(path, slide_filter = names(cell_data), file_pattern = roi_file_pattern),
     list(),
     "ROI data"
   )

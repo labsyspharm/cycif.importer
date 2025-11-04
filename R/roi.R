@@ -224,16 +224,13 @@ assign_rois_to_cells <- function(data, roi_data, scale_factor, roi_priority = NU
 
   # Convert cell coordinates to sf points
   cell_points <- data |>
-    filter(!is.na(Xt) & !is.na(Yt)) |>
+    tidyr::drop_na(Xt, Yt) |>
     sf::st_as_sf(coords = c("Xt", "Yt"))
 
   if (nrow(cell_points) == 0) {
     warning("No valid cell coordinates found")
     return(data)
   }
-
-  # Set same CRS for both datasets
-  sf::st_crs(cell_points) <- sf::st_crs(roi_data)
 
   # Use spatial intersection to find which cells are in which ROIs
   intersections <- sf::st_within(cell_points, roi_data)
@@ -265,7 +262,8 @@ assign_rois_to_cells <- function(data, roi_data, scale_factor, roi_priority = NU
     }
   })
   data$ROI <- roi_ids
-  data$ROIname <- ifelse(roi_ids > 0, roi_data$Name[roi_ids], "none")
+  roi_idx_nonzero <- which(roi_ids != 0)
+  data$ROIname[roi_idx_nonzero] <- roi_data$Name[roi_ids[roi_idx_nonzero]]
 
   # Report assignment results
   assigned_count <- sum(data$ROI != 0)

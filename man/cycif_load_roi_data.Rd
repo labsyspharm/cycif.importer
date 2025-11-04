@@ -4,16 +4,16 @@
 \alias{cycif_load_roi_data}
 \title{Load ROI polygon data}
 \usage{
-cycif_load_roi_data(roi_dir, file_pattern = "*-rois.csv")
+cycif_load_roi_data(roi_dir, slide_filter = NULL, file_pattern = "*-rois.csv")
 }
 \arguments{
 \item{roi_dir}{Directory containing ROI files}
 
+\item{slide_filter}{Optional vector of slide names to load}
+
 \item{file_pattern}{Glob pattern for matching files. The first \code{*} indicates
 where the slide name appears in the filename. Default: "\emph{-rois.csv"
 Examples: "Sample_}_rois.csv", "*_roi_data.csv"}
-
-\item{slide_names}{Optional vector of slide names to load ROIs for}
 }
 \value{
 Data frame with ROI polygon data, or NULL if no files found
@@ -27,8 +27,8 @@ Files should follow the naming pattern specified by \code{file_pattern}.
 # Load ROI data for all slides with default pattern
 roi_data <- cycif_load_roi_data("/path/to/rois")
 
-# Load ROI data for specific slides
-roi_data <- cycif_load_roi_data("/path/to/rois", slide_names = c("slide1", "slide2"))
+# Load specific slides only
+roi_data <- cycif_load_roi_data("/path/to/rois", slide_filter = c("slide1", "slide2"))
 
 # Use custom file pattern
 roi_data <- cycif_load_roi_data("/path/to/rois", file_pattern = "Sample_*_rois.csv")

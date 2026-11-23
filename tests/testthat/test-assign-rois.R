@@ -59,11 +59,25 @@ test_that("cycif_assign_rois uses roi_priority for overlapping ROIs", {
   # Test with priority: HighPriority > MediumPriority > LowPriority
   priority <- c("HighPriority", "MediumPriority", "LowPriority")
 
+  # Three mutually overlapping ROIs are a multiway overlap, which roi_priority
+  # cannot resolve, so the overlap check refuses to proceed
+  expect_error(
+    cycif_assign_rois(
+      cell_data = test_cells,
+      roi_data = test_rois,
+      expand_distance = 0,
+      roi_priority = priority
+    ),
+    "multiway_overlap"
+  )
+
+  # With the check disabled, roi_priority still decides the assignment
   assigned <- cycif_assign_rois(
     cell_data = test_cells,
     roi_data = test_rois,
     expand_distance = 0,
-    roi_priority = priority
+    roi_priority = priority,
+    check_overlaps = FALSE
   )
 
   result <- assigned$test_slide
@@ -141,7 +155,7 @@ test_that("cycif_assign_rois priority system works with different overlap patter
   expect_equal(cell3_roi, "LowPriority")
 })
 
-test_that("cycif_assign_rois falls back to first ROI when roi_priority is NULL", {
+test_that("cycif_assign_rois falls back to first ROI when overlap check is skipped", {
   # Create test cell data
   test_cells <- data.frame(
     CellID = 1,
@@ -170,11 +184,22 @@ test_that("cycif_assign_rois falls back to first ROI when roi_priority is NULL",
     slideName = "test_slide"
   )
 
-  # Test without roi_priority (should assign first ROI)
+  # Without roi_priority the contained ROI is an unsolvable overlap
+  expect_error(
+    cycif_assign_rois(
+      cell_data = test_cells,
+      roi_data = test_rois,
+      expand_distance = 0
+    ),
+    "fully_contained"
+  )
+
+  # Skipping the overlap check assigns the first intersecting ROI
   assigned <- cycif_assign_rois(
     cell_data = test_cells,
     roi_data = test_rois,
-    expand_distance = 0
+    expand_distance = 0,
+    check_overlaps = FALSE
   )
 
   result <- assigned$test_slide
@@ -206,16 +231,9 @@ test_that("analyze_roi_overlaps detects no overlaps correctly", {
     slideName = "test_slide"
   )
 
-  analysis <- analyze_roi_overlaps(test_rois, message_level = "error")
+  analysis <- analyze_roi_overlaps(test_rois)
 
-  expect_equal(nrow(analysis$summary), 1)
-  expect_equal(analysis$summary$overlapping_pairs, 0)
-  expect_equal(analysis$summary$small_overlaps, 0)
-  expect_equal(analysis$summary$large_overlaps, 0)
-  expect_equal(analysis$summary$multiway_overlaps, 0)
-  expect_equal(analysis$summary$containment_cases, 0)
-  expect_equal(analysis$summary$recommendation, "No overlaps detected - proceed with standard ROI assignment")
-
+  expect_equal(nrow(analysis$summary), 0)
   expect_equal(nrow(analysis$details), 0)
 })
 
@@ -240,19 +258,16 @@ test_that("analyze_roi_overlaps detects small overlaps correctly", {
     slideName = "test_slide"
   )
 
-  analysis <- analyze_roi_overlaps(test_rois, message_level = "error")
+  analysis <- analyze_roi_overlaps(test_rois)
 
   expect_equal(nrow(analysis$summary), 1)
-  expect_equal(analysis$summary$overlapping_pairs, 1)
-  expect_equal(analysis$summary$small_overlaps, 1)
-  expect_equal(analysis$summary$large_overlaps, 0)
-  expect_equal(analysis$summary$multiway_overlaps, 0)
-  expect_equal(analysis$summary$containment_cases, 0)
-  expect_equal(analysis$summary$recommendation, "Run resolve_roi_overlaps() to automatically split overlapping regions")
+  expect_equal(analysis$summary$slideName, "test_slide")
+  expect_equal(analysis$summary$issue, "small_overlap")
+  expect_equal(analysis$summary$n, 1)
 
   expect_equal(nrow(analysis$details), 1)
-  expect_equal(analysis$details$overlap_type, "small")
-  expect_equal(analysis$details$recommendation, "Run resolve_roi_overlaps() to automatically split overlapping regions")
+  expect_equal(analysis$details$issue, "small_overlap")
+  expect_match(analysis$details$issue_message, "small overlap")
 })
 
 test_that("analyze_roi_overlaps detects large overlaps correctly", {
@@ -276,19 +291,17 @@ test_that("analyze_roi_overlaps detects large overlaps correctly", {
     slideName = "test_slide"
   )
 
-  analysis <- analyze_roi_overlaps(test_rois, message_level = "error")
+  analysis <- analyze_roi_overlaps(test_rois)
 
   expect_equal(nrow(analysis$summary), 1)
-  expect_equal(analysis$summary$overlapping_pairs, 1)
-  expect_equal(analysis$summary$small_overlaps, 0)
-  expect_equal(analysis$summary$large_overlaps, 1)
-  expect_equal(analysis$summary$multiway_overlaps, 0)
-  expect_equal(analysis$summary$containment_cases, 0)
-  expect_equal(analysis$summary$recommendation, "Provide roi_priority vector to resolve conflicts")
+  expect_equal(analysis$summary$slideName, "test_slide")
+  expect_equal(analysis$summary$issue, "large_overlap")
+  expect_equal(analysis$summary$n, 1)
 
   expect_equal(nrow(analysis$details), 1)
-  expect_equal(analysis$details$overlap_type, "large")
-  expect_equal(analysis$details$recommendation, "Provide roi_priority vector to specify which ROI takes precedence")
+  expect_equal(analysis$details$issue, "large_overlap")
+  # Overlap area 64 is 64% of the small ROI
+  expect_match(analysis$details$issue_message, "ROI 1 overlaps to 64%")
 })
 
 test_that("analyze_roi_overlaps detects containment correctly", {
@@ -312,22 +325,19 @@ test_that("analyze_roi_overlaps detects containment correctly", {
     slideName = "test_slide"
   )
 
-  analysis <- analyze_roi_overlaps(test_rois, message_level = "error")
+  analysis <- analyze_roi_overlaps(test_rois)
 
   expect_equal(nrow(analysis$summary), 1)
-  expect_equal(analysis$summary$overlapping_pairs, 1)
-  expect_equal(analysis$summary$small_overlaps, 0)
-  expect_equal(analysis$summary$large_overlaps, 0)
-  expect_equal(analysis$summary$multiway_overlaps, 0)
-  expect_equal(analysis$summary$containment_cases, 1)
-  expect_equal(analysis$summary$recommendation, "Provide roi_priority vector to resolve conflicts")
+  expect_equal(analysis$summary$slideName, "test_slide")
+  expect_equal(analysis$summary$issue, "fully_contained")
+  expect_equal(analysis$summary$n, 1)
 
   expect_equal(nrow(analysis$details), 1)
-  expect_equal(analysis$details$overlap_type, "containment")
-  expect_equal(analysis$details$recommendation, "Provide roi_priority vector to handle nested ROI hierarchy (inner vs outer ROI precedence)")
+  expect_equal(analysis$details$issue, "fully_contained")
+  expect_match(analysis$details$issue_message, "ROI 1 fully contained within ROI 2")
 })
 
-test_that("cycif_assign_rois with check_overlaps warns about issues", {
+test_that("cycif_assign_rois with check_overlaps errors on unsolvable overlaps", {
   # Create test data with large overlaps that will be critical
   test_cells <- data.frame(
     CellID = 1,
@@ -363,7 +373,7 @@ test_that("cycif_assign_rois with check_overlaps warns about issues", {
       expand_distance = 0,
       check_overlaps = TRUE
     ),
-    "Critical ROI overlaps detected"
+    "unsolvable ROI overlap issues.*large_overlap"
   )
 
   # Should work when roi_priority is provided (may produce messages but not errors)

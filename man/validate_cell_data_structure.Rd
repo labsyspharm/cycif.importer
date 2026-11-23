@@ -12,8 +12,6 @@ validate_cell_data_structure(data, required_cols, no_missing = FALSE)
 \item{required_cols}{Character vector of required column names}
 
 \item{no_missing}{Logical indicating if missing values are allowed}
-
-\item{context}{Character string describing the context for error messages}
 }
 \value{
 NULL (invisibly) if validation passes, otherwise stops with error

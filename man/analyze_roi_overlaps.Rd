@@ -8,9 +8,6 @@ analyze_roi_overlaps(roi_data)
 }
 \arguments{
 \item{roi_data}{Data frame with ROI polygon definitions or list by slide}
-
-\item{warn_threshold}{Threshold for considering overlaps as "large"
-(default 0.5 = 50\% of parent ROI area)}
 }
 \value{
 List with summary statistics, detailed overlap information, and

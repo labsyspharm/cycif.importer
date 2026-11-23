@@ -123,7 +123,7 @@ cycif_assign_rois <- function(
 
 #' Standardize coordinate columns and convert to microns
 #'
-#' @param data1 Data frame with cell measurements
+#' @param data Data frame with cell measurements
 #' @param scale_factor Scale factor for converting pixels to microns
 #'
 #' @return Data frame with standardized coordinate columns
@@ -483,9 +483,7 @@ plot_roi_sf <- function(roi_sf, label_column = "Name") {
 #' with specific recommendations for handling conflicts during cell assignment.
 #'
 #' @param roi_data Data frame with ROI polygon definitions or list by slide
-#' @param warn_threshold Threshold for considering overlaps as "large"
-#'   (default 0.5 = 50% of parent ROI area)
-
+#'
 #' @return List with summary statistics, detailed overlap information, and
 #'   recommendations for resolving conflicts
 #' @export

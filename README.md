@@ -14,7 +14,7 @@ and marker gating.
 
 ## Features
 
-- **Data Import**: Load UNMICST cell segmentation data and ROI
+- **Data Import**: Load single cell quantification data and ROI
   definitions
 - **Gating**: Apply single and double marker gating thresholds
 - **ROI Assignment**: Assign cells to regions of interest polygons
@@ -26,11 +26,11 @@ and marker gating.
 ## Installation
 
 You can install the development version of cycif.importer from
-[GitHub](https://github.com/clemenshug/cycif.importer) with:
+[GitHub](https://github.com/labsyspharm/cycif.importer) with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("clemenshug/cycif.importer")
+remotes::install_github("labsyspharm/cycif.importer")
 ```
 
 ## Pipeline Overview
@@ -40,9 +40,10 @@ pipeline:
 
 ### Stage 1: Import & Gate
 
-- Load cell quantification data from UNMICST output
+- Load cell quantification data from MCMICRO output
 - Load ROI definitions
 - Apply single and double marker gates
+- Apply marker combinations
 - Assign cells to ROIs with optional boundary expansion
 
 ### Stage 2: Sample
@@ -70,7 +71,8 @@ library(dplyr)
 data_dir <- system.file("extdata/example_quants", package = "cycif.importer")
 roi_dir <- system.file("extdata/example_rois", package = "cycif.importer")
 gate_file <- system.file("extdata/example_gates.csv", package = "cycif.importer")
-output_dir <- tempdir()
+output_dir <- file.path(tempdir(), "cycif_example")
+dir.create(output_dir, showWarnings = FALSE)
 
 # Run the complete pipeline
 results <- cycif_pipeline(
@@ -101,9 +103,9 @@ The `output_dir` directory will contain the following files:
   ROI assignments
 - Summaries for each of the defined filter and grouping combinations
   e.g.
-  - `by_roi__PanCK+.csv.gz`: Summary statistics grouped by ROI including
-    only PanCK+ cells
-  - `by_slide__CD8+.csv.gz`: Summary statistics grouped by slide
+  - `summary_by_roi__PanCK+.csv.gz`: Summary statistics grouped by ROI
+    including only PanCK+ cells
+  - `summary_by_slide__CD8+.csv.gz`: Summary statistics grouped by slide
     including only CD8+ cells
 
 <!-- -->
@@ -123,7 +125,7 @@ You can also use individual functions for more control:
 ``` r
 # Load data step by step
 cell_data <- cycif_load_cell_data(data_dir)
-roi_data <- cycif_load_roi_data(roi_dir, names(cell_data))
+roi_data <- cycif_load_roi_data(roi_dir)
 
 # Apply gates
 gates <- readr::read_csv(gate_file)
@@ -147,7 +149,6 @@ sampled_data <- cycif_sample(
 # Generate summaries
 summaries <- cycif_summarize(
   sampled_data,
-  summary_filters = list(`CD8+` = ~CD8ap),
   summary_groups = list(by_slide = "slideName")
 )
 ```
@@ -157,9 +158,9 @@ summaries <- cycif_summarize(
 The package expects specific input file formats. Here are examples using
 the built-in test data:
 
-### Cell Quantification Data (UNMICST Output)
+### Cell Quantification Data
 
-Cell-level quantification files from UNMICST segmentation (`.csv` or
+Cell-level quantification files from MCMICRO or similar (`.csv` or
 `.csv.gz` format)
 
 #### Directory Structure
@@ -174,8 +175,12 @@ The cell quantification data directory should contain one `.csv` or
 
 - Files should follow the pattern: `{slideName}--unmicst_cell.csv[.gz]`
 - The `slideName` portion (before `--unmicst_cell`) must match the
-  `slideName` in your gate thresholds file
-- Compressed (`.gz`) files are automatically detected and handled
+  `slideName` in your gate thresholds file and the ROI file names.
+- Custom file patterns can be specified via the `cell_file_pattern`
+  argument in `cycif_load_cell_data()` or `cycif_pipeline()`. For the
+  example data, cell_file_pattern would be `*--unmicst_cell.csv*`. The
+  first wildcard (`*`) matches the slide name, and the second wildcard
+  (`*`) matches the optional `.gz` extension.
 
 #### Example
 

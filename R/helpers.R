@@ -2,7 +2,6 @@
 #'
 #' @param data Data frame to validate
 #' @param required_cols Character vector of required column names
-#' @param context Character string describing the context for error messages
 #' @param no_missing Logical indicating if missing values are allowed
 #'
 #' @return NULL (invisibly) if validation passes, otherwise stops with error

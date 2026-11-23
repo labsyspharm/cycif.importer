@@ -10,6 +10,10 @@
 #' @return Named character vector of matched file paths with slide names as names
 #' @keywords internal
 match_files_with_pattern <- function(dir, pattern) {
+  if (!dir.exists(dir)) {
+    stop(sprintf("Directory '%s' does not exist", dir))
+  }
+
   # Check that pattern contains at least one *
   if (!grepl("\\*", pattern)) {
     stop("File pattern must contain at least one '*' to indicate slide name position")

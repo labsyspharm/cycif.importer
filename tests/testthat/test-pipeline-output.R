@@ -9,9 +9,9 @@ test_that("pipeline writes expected files", {
   out <- tempfile()
   dir.create(out)
   cycif_pipeline(
-    data_dir = data_dir,
-    roi_dir = roi_dir,
-    gate_table_path = gate_file,
+    counts = data_dir,
+    rois = roi_dir,
+    gate_table = gate_file,
     output_dir = out,
     sample_size = 10,
     sampling_mode = "all_cells",

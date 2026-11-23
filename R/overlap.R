@@ -4,9 +4,12 @@
 #' ROIs by separating them into distinct non-overlapping regions.
 #'
 #' @param roi_data Data frame with ROI definitions (output from cycif_load_roi_data)
-#' @param scale_factor Scale factor for coordinate conversion (default 1.0)
+#' @param return_format Output format: `"df"` (default) returns a data frame
+#'   in ROI format with an `all_points` coordinate string column, `"sf"` returns
+#'   an sf object with polygon geometries.
 #'
-#' @return An sf object with resolved ROI polygons, preserving slideName and metadata
+#' @return ROI data with overlaps resolved, preserving slideName and metadata,
+#'   in the format given by `return_format`
 #' @export
 #'
 #' @examples

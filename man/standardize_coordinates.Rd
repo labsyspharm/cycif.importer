@@ -7,9 +7,9 @@
 standardize_coordinates(data, scale_factor)
 }
 \arguments{
-\item{scale_factor}{Scale factor for converting pixels to microns}
+\item{data}{Data frame with cell measurements}
 
-\item{data1}{Data frame with cell measurements}
+\item{scale_factor}{Scale factor for converting pixels to microns}
 }
 \value{
 Data frame with standardized coordinate columns

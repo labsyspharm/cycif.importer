@@ -34,11 +34,11 @@ gating.
 
 ## Installation
 
-You can install the development version of cycif.importer from [GitHub](https://github.com/clemenshug/cycif.importer) with:
+You can install the development version of cycif.importer from [GitHub](https://github.com/labsyspharm/cycif.importer) with:
 
 ``` r
 # install.packages("remotes")
-remotes::install_github("clemenshug/cycif.importer")
+remotes::install_github("labsyspharm/cycif.importer")
 ```
 
 ## Pipeline Overview
@@ -74,7 +74,8 @@ library(dplyr)
 data_dir <- system.file("extdata/example_quants", package = "cycif.importer")
 roi_dir <- system.file("extdata/example_rois", package = "cycif.importer")
 gate_file <- system.file("extdata/example_gates.csv", package = "cycif.importer")
-output_dir <- tempdir()
+output_dir <- file.path(tempdir(), "cycif_example")
+dir.create(output_dir, showWarnings = FALSE)
 
 # Run the complete pipeline
 results <- cycif_pipeline(
@@ -103,8 +104,8 @@ The `output_dir` directory will contain the following files:
 
 - `sampled_cells.csv.gz`: Cells sampled from the dataset with gates and ROI assignments
 - Summaries for each of the defined filter and grouping combinations e.g.
-  - `by_roi__PanCK+.csv.gz`: Summary statistics grouped by ROI including only PanCK+ cells
-  - `by_slide__CD8+.csv.gz`: Summary statistics grouped by slide including only CD8+ cells
+  - `summary_by_roi__PanCK+.csv.gz`: Summary statistics grouped by ROI including only PanCK+ cells
+  - `summary_by_slide__CD8+.csv.gz`: Summary statistics grouped by slide including only CD8+ cells
 
 ```{r show-files, echo=FALSE}
 list.files(output_dir)
@@ -117,7 +118,7 @@ You can also use individual functions for more control:
 ```{r modular-example, eval=FALSE}
 # Load data step by step
 cell_data <- cycif_load_cell_data(data_dir)
-roi_data <- cycif_load_roi_data(roi_dir, names(cell_data))
+roi_data <- cycif_load_roi_data(roi_dir)
 
 # Apply gates
 gates <- readr::read_csv(gate_file)
@@ -141,7 +142,6 @@ sampled_data <- cycif_sample(
 # Generate summaries
 summaries <- cycif_summarize(
   sampled_data,
-  summary_filters = list(`CD8+` = ~CD8ap),
   summary_groups = list(by_slide = "slideName")
 )
 ```

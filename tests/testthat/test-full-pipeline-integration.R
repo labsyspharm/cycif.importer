@@ -136,7 +136,7 @@ test_that("pipeline validates input directories", {
       counts = "/nonexistent/path",
       output_dir = tempdir()
     ),
-    "No --unmicst_cell.csv"
+    "Directory '/nonexistent/path' does not exist"
   )
 
   extdata_path <- system.file("extdata", package = "cycif.importer")
@@ -148,7 +148,7 @@ test_that("pipeline validates input directories", {
       rois = "/nonexistent/path",
       output_dir = tempdir()
     ),
-    "No ROI files found"
+    "Directory '/nonexistent/path' does not exist"
   )
 
   expect_error(

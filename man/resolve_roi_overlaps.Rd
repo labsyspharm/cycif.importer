@@ -9,10 +9,13 @@ resolve_roi_overlaps(roi_data, return_format = c("df", "sf"))
 \arguments{
 \item{roi_data}{Data frame with ROI definitions (output from cycif_load_roi_data)}
 
-\item{scale_factor}{Scale factor for coordinate conversion (default 1.0)}
+\item{return_format}{Output format: \code{"df"} (default) returns a data frame
+in ROI format with an \code{all_points} coordinate string column, \code{"sf"} returns
+an sf object with polygon geometries.}
 }
 \value{
-An sf object with resolved ROI polygons, preserving slideName and metadata
+ROI data with overlaps resolved, preserving slideName and metadata,
+in the format given by \code{return_format}
 }
 \description{
 Takes ROI data (output from \code{cycif_load_roi_data()}) and resolves overlapping
